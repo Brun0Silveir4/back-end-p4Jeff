@@ -6,7 +6,7 @@ admin.initializeApp({
 const db = admin.firestore();
 
 const controller = {
-  // getAllData
+  // GET  getAllData
   getAllItems: async (req, res) => {
     try {
       const response = await db.collection("SensorData").get();
@@ -14,7 +14,7 @@ const controller = {
       let responseArr = [];
 
       response.forEach((doc) => {
-          responseArr.push(doc.data());
+        responseArr.push(doc.data());
       });
 
       if (responseArr.length >= 1) {
@@ -27,13 +27,16 @@ const controller = {
     }
   },
 
+  // GET /getItemsPerDay/:day/:month/:year
   getItemsPerDay: async (req, res) => {
     try {
       const { day, month, year } = req.params;
-      console.log(`Dia: ${day}, Mês: ${month}, Ano: ${year}`);
+      let obj = { media: "", values: "" };
+      let tempValue;
 
       const response = await db.collection("SensorData").get();
       let responseArr = [];
+      let valueArr = [];
 
       response.forEach((doc) => {
         const docData = doc.data();
@@ -41,17 +44,24 @@ const controller = {
         const [docDay, docMonth, docYear] = docData.date.split("/");
 
         if (docDay === day && docMonth === month && docYear === year) {
+          tempValue = parseInt(docData.temp);
+          valueArr.push(tempValue);
           responseArr.push(docData);
         }
       });
+      let sum = valueArr.reduce((accumulator, value) => accumulator + value, 0);
+      let media = sum / responseArr.length;
 
+      obj.media = media;
+      obj.values = responseArr;
       if (responseArr.length > 0) {
-        res.status(200).json(responseArr);
+        res.status(200).json(obj);
       }
     } catch (error) {
-        res.status(400).json({ error: "No data found for the specified date" });
+      res.status(400).json({ error: "No data found for the specified date" });
     }
-  },
+  }
+
 };
 
 module.exports = controller;
