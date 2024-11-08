@@ -26,8 +26,10 @@ const getItemsPerDay = async (req, res) => {
 
       obj.media = media;
       obj.values = responseArr;
-      if (responseArr.length > 0) {
+      if (obj.values.length !== 0) {
         res.status(200).json(obj);
+      } else {
+        res.status(404).json({error: 'No data found'})
       }
     } catch (error) {
       res.status(400).json({ error: "No data found for the specified date" });
