@@ -7,33 +7,45 @@ const getAllItems = async (req, res) => {
 
         response.forEach((data) => {
             const docData = data.data();
-            const docDate = docData.date; 
-            
-            if (!entriesByDay[docDate] || compareTimes(docData.time, entriesByDay[docDate].time)) {
-                entriesByDay[docDate] = docData; 
-                console.log(entriesByDay[docDate])
+
+
+            if (!docData.date || !docData.time) {
+                console.log(`Documento ignorado por dados incompletos: ${JSON.stringify(docData)}`);
+                return; 
+            }
+
+
+            if (!entriesByDay[docData.date] || compareTimes(docData.time, entriesByDay[docData.date].time)) {
+                entriesByDay[docData.date] = docData;
             }
         });
 
+
         const sortedEntries = Object.values(entriesByDay).sort((a, b) => {
-            const [dayA, monthA, yearA] = a.date.split("/").map(Number);
-            const [dayB, monthB, yearB] = b.date.split("/").map(Number);
+            const [dayA, monthA, yearA] = a.date.split("-").map(Number);
+            const [dayB, monthB, yearB] = b.date.split("-").map(Number);
 
             const dateA = new Date(yearA, monthA - 1, dayA);
             const dateB = new Date(yearB, monthB - 1, dayB);
 
-            return dateB - dateA; 
+            return dateB - dateA;
         });
 
-        console.log(sortedEntries)
 
-        if (sortedEntries.length > 0) {
-            res.status(200).json(sortedEntries);
+        const formattedEntries = sortedEntries.map(entry => {
+            const [year, month, day] = entry.date.split("-").map(Number);
+            entry.date = `${day.toString().padStart(2, '0')}/${month.toString().padStart(2, '0')}/${year}`;
+            return entry;
+        });
+
+        if (formattedEntries.length > 0) {
+            res.json(formattedEntries);
         } else {
-            res.status(404).json({ error: 'No data found' });
+            res.json({ error: 'No valid data found' });
         }
     } catch (e) {
-        res.status(500).json({ error: "Internal Server Error" });
+        console.log(e);
+        res.json({ error: "Internal Server Error" });
     }
 };
 
@@ -42,9 +54,9 @@ function compareTimes(time1, time2) {
     const [hour2, minute2] = time2.split(":").map(Number);
 
     if (hour1 !== hour2) {
-        return hour1 > hour2; 
+        return hour1 > hour2;
     }
-    return minute1 > minute2; 
+    return minute1 > minute2;
 }
 
 module.exports = getAllItems;
