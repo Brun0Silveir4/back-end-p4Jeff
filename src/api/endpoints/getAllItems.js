@@ -10,7 +10,6 @@ const getAllItems = async (req, res) => {
 
 
             if (!docData.date || !docData.time) {
-                console.log(`Documento ignorado por dados incompletos: ${JSON.stringify(docData)}`);
                 return; 
             }
 
